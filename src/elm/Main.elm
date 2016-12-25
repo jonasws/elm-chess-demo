@@ -1,14 +1,19 @@
 import Html exposing (..)
+import Html.Events exposing ( onClick )
 
 import Svg exposing (..)
 import Svg.Attributes exposing (..)
 
+
 import Dict
-import List
+import List exposing (..)
+import Maybe exposing (..)
+
+import Actions exposing (..)
 
 import Components.Board as Board exposing ( Square )
 import Components.Position exposing ( initialPosition, Position )
-import Pieces exposing ( pieceSvg, Piece)
+import Pieces exposing ( pieceSvg, Piece )
 
 -- APP
 main : Program Never Model Msg
@@ -17,54 +22,78 @@ main =
 
 -- MODEL
 type alias Model =
-    { selected : Square
-    , position : Position
-    }
+  { selected : Square
+  , currentPosition : Position
+  , previousPositions : List Position
+  , nextPositions : List Position
+  }
 
 model : Model
-model = Model (-1, -1) initialPosition
+model = Model (-1, -1) initialPosition [] []
 
 getPiece : Square -> Position -> Maybe Piece
 getPiece (x1, y1) position =
-    Dict.get (y1, x1) position
+  Dict.get (y1, x1) position
 
 
 movePiece : Square -> Square -> Piece -> Position -> Position
 movePiece (x1, y1) (x2, y2) piece position =
-    Dict.remove (y1, x1) <| Dict.insert (y2, x2) piece position
-
+  Dict.remove (y1, x1) <| Dict.insert (y2, x2) piece position
 
 -- UPDATE
-type alias Msg = Square
 update : Msg -> Model -> Model
-update (sx, sy) model =
+update msg model =
+  case msg of
+    GoBack ->
+      { model |
+          currentPosition = withDefault model.currentPosition <| head model.previousPositions
+          , previousPositions = drop 1 model.previousPositions
+          , nextPositions = model.currentPosition :: model.nextPositions
+
+      }
+    GoForward ->
+      { model |
+          currentPosition = withDefault model.currentPosition <| head model.nextPositions
+          , nextPositions = drop 1 model.nextPositions
+          , previousPositions = model.currentPosition :: model.previousPositions
+
+      }
+
+    SquareClicked (sx, sy) ->
+
     if (sx, sy) == model.selected then
-        { model |
-              selected = (-1, -1)
-        }
+      { model |
+          selected = (-1, -1)
+      }
     else
-        let
-            selectedPiece = getPiece model.selected model.position
-        in
-            case selectedPiece of
-                Nothing -> { model |
-                                 selected = (sx, sy)
-                           }
-                Just piece -> { model |
-                                   position = movePiece model.selected (sx, sy) piece model.position,
-                                   selected = (-1, -1)
-                             }
+      let
+        selectedPiece = getPiece model.selected model.currentPosition
+      in
+        case selectedPiece of
+          Nothing -> { model |
+                       selected = (sx, sy)
+                     }
+          Just piece -> { model |
+                          currentPosition = movePiece model.selected (sx, sy) piece model.currentPosition
+                        , previousPositions = model.currentPosition :: model.previousPositions
+                        , selected = (-1, -1)
+                        }
 -- VIEW
--- Html is defined as: elem [ attribs ][ children ]
--- CSS can be applied via class names or inline style attrib
 view : Model -> Html Msg
 view model =
-    svg [width "400", height "400"]
-        <| List.concat
-            [ Board.squares <| getSelectedSquare model
-            , List.map pieceSvg <| Dict.toList model.position
-            ]
-
+  div [] [
+     svg [width "400", height "400"]
+       <| List.concat
+       [ Board.squares <| getSelectedSquare model
+       , List.map pieceSvg <| Dict.toList model.currentPosition
+       ]
+     , div [] [
+        button [ onClick GoBack ] [
+      Html.text "Previous"]
+     , button [ onClick GoForward ] [
+      Html.text "Next"]
+       ]
+    ]
 
 getSelectedSquare : Model -> Square
 getSelectedSquare = .selected

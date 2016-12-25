@@ -8,21 +8,23 @@ import Svg.Attributes exposing (..)
 
 import Html.Events exposing ( onClick )
 
+import Actions exposing (..)
+
 type alias Square = (Int, Int)
 
-squares : Square -> List (Svg (Int, Int))
+squares : Square -> List (Svg Msg)
 squares (sx, sy) = List.map squareSvg <| List.concatMap (\y -> List.map (\x -> ((x, y), x == sx && y == sy)) <| List.range 0 7) <| List.range 0 7
 
 
-squareSvg : (Square, Bool)  -> Svg (Int, Int)
+squareSvg : (Square, Bool)  -> Svg Msg
 squareSvg (square, selected) =
-    rect [x <| toString <| 50 * first square
-         , y <| toString <| 50 * second square
-         , width "50"
-         , height "50"
-         , fill <| if selected then "yellow" else if isDarkSquare square then "green" else "lightblue"
-         , onClick square
-         ] []
+  rect [x <| toString <| 50 * first square
+     , y <| toString <| 50 * second square
+     , width "50"
+     , height "50"
+     , fill <| if selected then "yellow" else if isDarkSquare square then "green" else "lightblue"
+     , onClick <| SquareClicked square
+     ] []
 
 yToFile : Int -> Char
 yToFile = Char.fromCode << (+) 97
