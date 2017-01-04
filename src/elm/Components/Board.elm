@@ -12,6 +12,7 @@ import Actions exposing (..)
 
 type alias Square = (Int, Int)
 
+-- Fancy function application (reuce number of parentheses, use with care)
 squares : Square -> List (Svg Msg)
 squares (sx, sy) = List.map squareSvg <| List.concatMap (\y -> List.map (\x -> ((x, y), x == sx && y == sy)) <| List.range 0 7) <| List.range 0 7
 
@@ -22,16 +23,24 @@ squareSvg (square, selected) =
      , y <| toString <| 50 * second square
      , width "50"
      , height "50"
-     , fill <| if selected then "yellow" else if isDarkSquare square then "green" else "lightblue"
+     , fill <| if selected then
+                   "yellow"
+               else
+                   if isDarkSquare square then
+                       "green"
+                   else
+                       "lightblue"
      , onClick <| SquareClicked square
      ] []
 
+-- Examples of function composition
 yToFile : Int -> Char
 yToFile = Char.fromCode << (+) 97
 
 xToRank : Int -> Int
 xToRank = (+) 1
 
+-- Pattern matching
 isDarkSquare : Square -> Bool
 isDarkSquare (x, y) = xor (isEven x) (isEven y)
 

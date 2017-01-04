@@ -9,7 +9,7 @@ type alias Position = Dict Square Piece
 
 initialPosition : Position
 initialPosition =
-  fromList[
+  fromList [
      ((0, 0), Piece Rook Black)
    , ((0, 1), Piece Knight Black)
    , ((0, 2), Piece Bishop Black)

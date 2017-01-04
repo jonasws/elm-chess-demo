@@ -40,6 +40,12 @@ movePiece : Square -> Square -> Piece -> Position -> Position
 movePiece (x1, y1) (x2, y2) piece position =
   Dict.remove (y1, x1) <| Dict.insert (y2, x2) piece position
 
+pieceHasSameColor : Piece -> Maybe Piece -> Bool
+pieceHasSameColor piece otherPiece =
+    case otherPiece of
+        Nothing -> False
+        Just op -> piece.color == op.color
+
 -- UPDATE
 update : Msg -> Model -> Model
 update msg model =
@@ -68,16 +74,21 @@ update msg model =
     else
       let
         selectedPiece = getPiece model.selected model.currentPosition
+        clickedPiece = getPiece (sx, sy) model.currentPosition
       in
         case selectedPiece of
           Nothing -> { model |
                        selected = (sx, sy)
                      }
-          Just piece -> { model |
-                          currentPosition = movePiece model.selected (sx, sy) piece model.currentPosition
-                        , previousPositions = model.currentPosition :: model.previousPositions
-                        , selected = (-1, -1)
-                        }
+          Just piece ->
+              if not <| pieceHasSameColor piece clickedPiece then
+                  { model |
+                        currentPosition = movePiece model.selected (sx, sy) piece model.currentPosition
+                  , previousPositions = model.currentPosition :: model.previousPositions
+                  , selected = (-1, -1)
+                  }
+              else
+                  model
 -- VIEW
 view : Model -> Html Msg
 view model =
